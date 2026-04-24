@@ -49,10 +49,7 @@ interface PageProps {
     jobs: Job[];
 }
 
-const DEFAULT_COL_WIDTHS = [48, 0, 0, 0, 256, 48];
-
-const ROW_HEIGHT = 52;
-const VIRTUAL_BUFFER = 10;
+const DEFAULT_COL_WIDTHS = [48, 0, 0, 0, 256];
 
 function loadShortlist(): Set<string> {
     try {
@@ -93,9 +90,6 @@ export default function ClientHome({ jobs }: PageProps) {
     const colDragging = useRef<number | null>(null);
     const colStartX = useRef(0);
     const colStartW = useRef(0);
-
-    const tableContainerRef = useRef<HTMLDivElement>(null);
-    const [scrollTop, setScrollTop] = useState(0);
 
     useEffect(() => {
         localStorage.setItem(
@@ -234,26 +228,6 @@ export default function ClientHome({ jobs }: PageProps) {
         minScore,
         search,
     ]);
-
-    const totalHeight = filtered.length * ROW_HEIGHT;
-    const visibleStart = Math.max(
-        0,
-        Math.floor(scrollTop / ROW_HEIGHT) - VIRTUAL_BUFFER,
-    );
-    const visibleEnd = Math.min(
-        filtered.length,
-        Math.ceil(scrollTop / ROW_HEIGHT) +
-            Math.ceil(600 / ROW_HEIGHT) +
-            VIRTUAL_BUFFER,
-    );
-
-    const visibleRows = useMemo(() => {
-        const rows: { candidate: ScoredCandidate; index: number }[] = [];
-        for (let i = visibleStart; i < visibleEnd; i++) {
-            rows.push({ candidate: filtered[i], index: i });
-        }
-        return rows;
-    }, [filtered, visibleStart, visibleEnd]);
 
     const onPanelMouseDown = useCallback(
         (e: React.MouseEvent) => {
@@ -493,15 +467,7 @@ export default function ClientHome({ jobs }: PageProps) {
                             </div>
                         </div>
 
-                        <div
-                            ref={tableContainerRef}
-                            className="flex-1 overflow-y-auto"
-                            onScroll={(e) =>
-                                setScrollTop(
-                                    (e.target as HTMLDivElement).scrollTop,
-                                )
-                            }
-                        >
+                        <div className="flex-1 overflow-y-auto">
                             <table className="w-full">
                                 <thead className="sticky top-0 bg-neutral-50 border-b border-neutral-200 select-none z-10">
                                     <tr className="text-xs text-neutral-500 uppercase tracking-wider">
@@ -511,7 +477,6 @@ export default function ClientHome({ jobs }: PageProps) {
                                             "Current Role",
                                             "Location",
                                             "Score",
-                                            "",
                                         ].map((h, i) => (
                                             <th
                                                 key={i}
@@ -519,26 +484,21 @@ export default function ClientHome({ jobs }: PageProps) {
                                                 style={colStyle(i)}
                                             >
                                                 {h}
-                                                {i < 5 && (
-                                                    <div
-                                                        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-ember/30 transition-colors"
-                                                        onMouseDown={onColMouseDown(
-                                                            i,
-                                                        )}
-                                                    />
-                                                )}
+                                                <div
+                                                    className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-ember/30 transition-colors"
+                                                    onMouseDown={onColMouseDown(
+                                                        i,
+                                                    )}
+                                                />
                                             </th>
                                         ))}
                                     </tr>
                                 </thead>
-                                <tbody
-                                    className="select-none relative"
-                                    style={{ height: totalHeight }}
-                                >
+                                <tbody className="select-none">
                                     {loading ? (
                                         <tr>
                                             <td
-                                                colSpan={6}
+                                                colSpan={5}
                                                 className="px-6 py-12 text-center text-neutral-400"
                                             >
                                                 Computing embeddings...
@@ -548,115 +508,72 @@ export default function ClientHome({ jobs }: PageProps) {
                                             </td>
                                         </tr>
                                     ) : (
-                                        visibleRows.map(
-                                            ({ candidate: c, index: i }) => (
-                                                <tr
-                                                    key={c.contact.id}
-                                                    className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors cursor-pointer absolute w-full"
-                                                    style={{
-                                                        top: i * ROW_HEIGHT,
-                                                        height: ROW_HEIGHT,
-                                                    }}
-                                                    onClick={() =>
-                                                        setSelectedCandidate(c)
-                                                    }
+                                        filtered.map((c, i) => (
+                                            <tr
+                                                key={c.contact.id}
+                                                className={`border-b border-neutral-100 hover:bg-neutral-50 transition-colors cursor-pointer ${
+                                                    selectedCandidate?.contact
+                                                        .id === c.contact.id
+                                                        ? "bg-amber-50"
+                                                        : ""
+                                                }`}
+                                                onClick={() =>
+                                                    setSelectedCandidate(c)
+                                                }
+                                            >
+                                                <td
+                                                    className="px-6 py-3.5 text-sm text-neutral-400 font-mono"
+                                                    style={colStyle(0)}
                                                 >
-                                                    <td
-                                                        className="px-6 py-3.5 text-sm text-neutral-400 font-mono"
-                                                        style={colStyle(0)}
-                                                    >
-                                                        {i + 1}
-                                                    </td>
-                                                    <td
-                                                        className="px-6 py-3.5"
-                                                        style={colStyle(1)}
-                                                    >
-                                                        <div className="font-medium text-sm text-neutral-800">
-                                                            {
-                                                                c.contact
-                                                                    .firstName
-                                                            }{" "}
-                                                            {c.contact.lastName}
-                                                        </div>
-                                                    </td>
-                                                    <td
-                                                        className="px-6 py-3.5"
-                                                        style={colStyle(2)}
-                                                    >
-                                                        <div className="text-sm text-neutral-700 truncate">
-                                                            {
-                                                                c.contact
-                                                                    .currentTitle
-                                                            }
-                                                        </div>
-                                                        <div className="text-xs text-neutral-400">
-                                                            {
-                                                                c.contact
-                                                                    .currentCompany
-                                                            }
-                                                        </div>
-                                                    </td>
-                                                    <td
-                                                        className="px-6 py-3.5 text-sm text-neutral-600"
-                                                        style={colStyle(3)}
-                                                    >
-                                                        {c.contact.location}
-                                                    </td>
-                                                    <td
-                                                        className="px-6 py-3.5"
-                                                        style={colStyle(4)}
-                                                    >
-                                                        <span className="text-lg font-bold text-neutral-700">
-                                                            {c.score}
-                                                        </span>
-                                                        <span className="text-xs text-neutral-400 font-mono ml-0.5">
-                                                            /100
-                                                        </span>
-                                                    </td>
-                                                    <td
-                                                        className="px-6 py-3.5"
-                                                        style={colStyle(5)}
-                                                    >
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                toggleShortlist(
-                                                                    c.contact
-                                                                        .id,
-                                                                );
-                                                            }}
-                                                            className={`text-lg transition-colors ${
-                                                                shortlist.has(
-                                                                    c.contact
-                                                                        .id,
-                                                                )
-                                                                    ? "text-amber-500"
-                                                                    : "text-neutral-300 hover:text-amber-400"
-                                                            }`}
-                                                            title={
-                                                                shortlist.has(
-                                                                    c.contact
-                                                                        .id,
-                                                                )
-                                                                    ? "Remove from shortlist"
-                                                                    : "Add to shortlist"
-                                                            }
-                                                        >
-                                                            {shortlist.has(
-                                                                c.contact.id,
-                                                            )
-                                                                ? "\u2605"
-                                                                : "\u2606"}
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ),
-                                        )
+                                                    {i + 1}
+                                                </td>
+                                                <td
+                                                    className="px-6 py-3.5"
+                                                    style={colStyle(1)}
+                                                >
+                                                    <div className="font-medium text-sm text-neutral-800">
+                                                        {c.contact.firstName}{" "}
+                                                        {c.contact.lastName}
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    className="px-6 py-3.5"
+                                                    style={colStyle(2)}
+                                                >
+                                                    <div className="text-sm text-neutral-700 truncate">
+                                                        {c.contact.currentTitle}
+                                                    </div>
+                                                    <div className="text-xs text-neutral-400 truncate">
+                                                        {
+                                                            c.contact
+                                                                .currentCompany
+                                                        }
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    className="px-6 py-3.5 text-sm text-neutral-600"
+                                                    style={colStyle(3)}
+                                                >
+                                                    {c.contact.location}
+                                                </td>
+                                                <td
+                                                    className="px-6 py-3.5"
+                                                    style={colStyle(4)}
+                                                >
+                                                    <span className="text-lg font-bold text-neutral-700">
+                                                        {c.score}
+                                                    </span>
+                                                    <span className="text-xs text-neutral-400 font-mono ml-0.5">
+                                                        /100
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))
                                     )}
                                     {!loading && filtered.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={6}
+                                                colSpan={5}
                                                 className="px-6 py-12 text-center text-neutral-400"
                                             >
                                                 No candidates match your filters
