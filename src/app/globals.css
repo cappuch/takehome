@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #fefefe;
+  --foreground: #181818;
+  --ember: #cd5700;
+  --ember-light: #ff720a;
+  --ember-dark: #8f3c00;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
