@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loadContacts } from "@/lib/contacts";
 import { fetchJobs } from "@/lib/jobs";
-import {
-    rankCandidates,
-    DEFAULT_WEIGHTS,
-    type ScoringWeights,
-} from "@/lib/scoring";
-import type { Job } from "@/types";
+import { rankCandidates } from "@/lib/scoring";
+import type { Job, ScoringWeights } from "@/types";
+import { DEFAULT_WEIGHTS } from "@/types";
 
 const scoreCache = new Map<string, Record<string, unknown>>();
 let jobsCache: Job[] | null = null;
@@ -56,6 +53,8 @@ export async function POST(request: NextRequest) {
                 contact: s.contact,
                 score: s.score,
                 breakdown: s.breakdown,
+                confidence: s.confidence,
+                matchReasons: s.matchReasons,
             })),
         };
 

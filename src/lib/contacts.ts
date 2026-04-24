@@ -115,5 +115,3 @@ export function loadContacts(): Contact[] {
     cachedContacts = contacts;
     return contacts;
 }
-
-// MY NPM BROKE

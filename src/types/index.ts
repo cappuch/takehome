@@ -45,7 +45,29 @@ export interface Job {
 }
 
 export interface ScoreBreakdown {
-    total: number;
+    skills: number;
+    experience: number;
+    location: number;
+    seniority: number;
+    availability: number;
+    education: number;
+    certifications: number;
+}
+
+export interface MatchReason {
+    label: string;
+    detail: string;
+}
+
+export interface ScoredCandidate {
+    contact: Contact;
+    score: number;
+    breakdown: ScoreBreakdown;
+    confidence: number;
+    matchReasons: MatchReason[];
+}
+
+export interface ScoringWeights {
     skills: number;
     experience: number;
     location: number;
@@ -54,8 +76,20 @@ export interface ScoreBreakdown {
     education: number;
 }
 
-export interface ScoredCandidate {
-    contact: Contact;
-    score: number;
-    breakdown: ScoreBreakdown;
-}
+export const DEFAULT_WEIGHTS: ScoringWeights = {
+    skills: 0.45,
+    experience: 0.2,
+    location: 0.15,
+    seniority: 0.1,
+    availability: 0.05,
+    education: 0.05,
+};
+
+export const WEIGHT_LABELS: Record<keyof ScoringWeights, string> = {
+    skills: "Skills Match",
+    experience: "Experience",
+    location: "Location",
+    seniority: "Seniority",
+    availability: "Availability",
+    education: "Education",
+};

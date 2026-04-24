@@ -3,7 +3,7 @@ import type { Job } from "@/types";
 export async function fetchJobs(): Promise<Job[]> {
     const scraperBase =
         process.env.SCRAPER_BASE ||
-        "https://misty-snow-9cc3.mikussturmanis1.workers.dev/?url="; // hardcoding it LOL
+        "https://misty-snow-9cc3.mikussturmanis1.workers.dev/?url=";
     const targetUrl = encodeURIComponent("https://jobs.ashbyhq.com/stackone");
 
     try {
