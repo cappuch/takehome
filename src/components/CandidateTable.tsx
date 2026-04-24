@@ -7,6 +7,8 @@ interface CandidateTableProps {
     loading: boolean;
     selectedCandidate: ScoredCandidate | null;
     onSelect: (c: ScoredCandidate) => void;
+    onCompare: (c: ScoredCandidate) => void;
+    isComparing: (contactId: string) => boolean;
     colWidths: number[];
     onColMouseDown: (idx: number) => (e: React.MouseEvent) => void;
 }
@@ -21,14 +23,16 @@ export default function CandidateTable({
     loading,
     selectedCandidate,
     onSelect,
+    onCompare,
+    isComparing,
     colWidths,
     onColMouseDown,
 }: CandidateTableProps) {
     return (
         <div className="flex-1 overflow-y-auto">
             <table className="w-full">
-                <thead className="sticky top-0 bg-neutral-50 border-b border-neutral-200 select-none z-10">
-                    <tr className="text-xs text-neutral-500 uppercase tracking-wider">
+                <thead className="sticky top-0 bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 select-none z-10">
+                    <tr className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                         {[
                             "#",
                             "Candidate",
@@ -55,10 +59,10 @@ export default function CandidateTable({
                         <tr>
                             <td
                                 colSpan={5}
-                                className="px-6 py-12 text-center text-neutral-400"
+                                className="px-6 py-12 text-center text-neutral-400 dark:text-neutral-500"
                             >
                                 Computing embeddings...
-                                <div className="text-sm mt-1 text-neutral-500">
+                                <div className="text-sm mt-1 text-neutral-500 dark:text-neutral-400">
                                     First run ~30s, then cached
                                 </div>
                             </td>
@@ -67,10 +71,10 @@ export default function CandidateTable({
                         candidates.map((c, i) => (
                             <tr
                                 key={c.contact.id}
-                                className={`border-b border-neutral-100 hover:bg-neutral-50 transition-colors cursor-pointer ${
+                                className={`border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer ${
                                     selectedCandidate?.contact.id ===
                                     c.contact.id
-                                        ? "bg-amber-50"
+                                        ? "bg-amber-50 dark:bg-amber-900/20"
                                         : ""
                                 }`}
                                 onClick={() => onSelect(c)}
@@ -85,24 +89,31 @@ export default function CandidateTable({
                                     className="px-6 py-3.5"
                                     style={colStyle(1, colWidths)}
                                 >
-                                    <div className="font-medium text-sm text-neutral-800">
-                                        {c.contact.firstName}{" "}
-                                        {c.contact.lastName}
+                                    <div className="flex items-center gap-2">
+                                        <div className="font-medium text-sm text-neutral-800 dark:text-neutral-200">
+                                            {c.contact.firstName}{" "}
+                                            {c.contact.lastName}
+                                        </div>
+                                        {c.confidence < 50 && (
+                                            <span className="text-[10px] px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded font-medium">
+                                                Low data
+                                            </span>
+                                        )}
                                     </div>
                                 </td>
                                 <td
                                     className="px-6 py-3.5"
                                     style={colStyle(2, colWidths)}
                                 >
-                                    <div className="text-sm text-neutral-700 truncate">
+                                    <div className="text-sm text-neutral-700 dark:text-neutral-300 truncate">
                                         {c.contact.currentTitle}
                                     </div>
-                                    <div className="text-xs text-neutral-400 truncate">
+                                    <div className="text-xs text-neutral-400 dark:text-neutral-500 truncate">
                                         {c.contact.currentCompany}
                                     </div>
                                 </td>
                                 <td
-                                    className="px-6 py-3.5 text-sm text-neutral-600"
+                                    className="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400"
                                     style={colStyle(3, colWidths)}
                                 >
                                     {c.contact.location}
@@ -111,12 +122,34 @@ export default function CandidateTable({
                                     className="px-6 py-3.5"
                                     style={colStyle(4, colWidths)}
                                 >
-                                    <span className="text-lg font-bold text-neutral-700">
-                                        {c.score}
-                                    </span>
-                                    <span className="text-xs text-neutral-400 font-mono ml-0.5">
-                                        /100
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span
+                                            className={`text-lg font-bold ${
+                                                c.score >= 70
+                                                    ? "text-emerald-600 dark:text-emerald-400"
+                                                    : c.score >= 40
+                                                      ? "text-amber-600 dark:text-amber-400"
+                                                      : "text-red-500 dark:text-red-400"
+                                            }`}
+                                        >
+                                            {c.score}
+                                        </span>
+                                        <span className="text-xs text-neutral-400 font-mono">
+                                            /100
+                                        </span>
+                                        {!isComparing(c.contact.id) && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onCompare(c);
+                                                }}
+                                                className="text-xs px-1.5 py-0.5 text-neutral-400 hover:text-ember transition-colors"
+                                                title="Add to comparison"
+                                            >
+                                                +
+                                            </button>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))
@@ -125,7 +158,7 @@ export default function CandidateTable({
                         <tr>
                             <td
                                 colSpan={5}
-                                className="px-6 py-12 text-center text-neutral-400"
+                                className="px-6 py-12 text-center text-neutral-400 dark:text-neutral-500"
                             >
                                 No candidates match your filters
                             </td>

@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { loadContacts } from "@/lib/contacts";
 import { fetchJobs } from "@/lib/jobs";
 import { rankCandidates } from "@/lib/scoring";
-import type { Job, ScoringWeights } from "@/types";
+import type { Job } from "@/types";
 import { DEFAULT_WEIGHTS } from "@/types";
+
+const ScoreRequestSchema = z.object({
+    jobId: z.string().min(1, "jobId is required"),
+    weights: z
+        .object({
+            skills: z.number().min(0).max(1).optional(),
+            experience: z.number().min(0).max(1).optional(),
+            location: z.number().min(0).max(1).optional(),
+            seniority: z.number().min(0).max(1).optional(),
+            availability: z.number().min(0).max(1).optional(),
+            education: z.number().min(0).max(1).optional(),
+        })
+        .optional(),
+});
 
 const scoreCache = new Map<string, Record<string, unknown>>();
 let jobsCache: Job[] | null = null;
@@ -13,14 +28,16 @@ const JOBS_CACHE_TTL = 30 * 60 * 1000;
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { jobId, weights } = body;
+        const parsed = ScoreRequestSchema.safeParse(body);
 
-        if (!jobId) {
+        if (!parsed.success) {
             return NextResponse.json(
-                { error: "Missing jobId" },
+                { error: "Invalid request", details: parsed.error.flatten() },
                 { status: 400 },
             );
         }
+
+        const { jobId, weights } = parsed.data;
 
         const cacheKey = weights
             ? `${jobId}_${JSON.stringify(weights)}`
@@ -44,7 +61,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const scoringWeights: ScoringWeights = weights || DEFAULT_WEIGHTS;
+        const scoringWeights = { ...DEFAULT_WEIGHTS, ...weights };
         const scored = await rankCandidates(contacts, job, scoringWeights);
 
         const result = {

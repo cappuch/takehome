@@ -47,10 +47,32 @@ function buildCandidateText(contact: Contact): string {
         .join(" ");
 }
 
+function parseDurationYears(duration: string): number {
+    if (!duration) return 0;
+    const match = duration.match(/(\d+)\s*(yr|year|mo|month)/gi);
+    if (!match) return 0;
+    let totalMonths = 0;
+    for (const m of match) {
+        const num = parseInt(m, 10);
+        if (
+            m.toLowerCase().includes("yr") ||
+            m.toLowerCase().includes("year")
+        ) {
+            totalMonths += num * 12;
+        } else if (
+            m.toLowerCase().includes("mo") ||
+            m.toLowerCase().includes("month")
+        ) {
+            totalMonths += num;
+        }
+    }
+    return totalMonths / 12;
+}
+
 function scoreExperience(
     contact: Contact,
     job: Job,
-): { score: number; reasons: string[] } {
+): { score: number; reasons: string[]; relevantYears: number } {
     const jobTitle = normalize(job.title);
     const jobTeam = normalize(job.team || "");
     const reasons: string[] = [];
@@ -68,10 +90,14 @@ function scoreExperience(
         return false;
     });
 
-    if (relevantExperience.length === 0) return { score: 20, reasons: [] };
+    if (relevantExperience.length === 0)
+        return { score: 20, reasons: [], relevantYears: 0 };
 
-    const totalEntries = contact.experienceSummary.length;
-    const relevantRatio = relevantExperience.length / Math.max(totalEntries, 1);
+    let relevantYears = 0;
+    for (const exp of relevantExperience) {
+        relevantYears += parseDurationYears(exp.duration);
+    }
+
     const hasCurrentRelevant = relevantExperience.some((e) => e.isCurrent);
 
     if (hasCurrentRelevant) {
@@ -80,16 +106,24 @@ function scoreExperience(
         );
     }
 
+    if (relevantYears >= 5) {
+        reasons.push(
+            `${relevantYears.toFixed(1)} years of relevant experience`,
+        );
+    } else if (relevantYears >= 2) {
+        reasons.push(
+            `${relevantYears.toFixed(1)} years of relevant experience`,
+        );
+    }
+
+    const yearsScore = Math.min(100, (relevantYears / 8) * 100);
+    const hasCurrentBonus = hasCurrentRelevant ? 20 : 0;
+
     const score = Math.round(
-        Math.min(
-            100,
-            0.5 * relevantRatio * 100 +
-                0.3 * (hasCurrentRelevant ? 100 : 0) +
-                20,
-        ),
+        Math.min(100, 0.6 * yearsScore + 0.2 * hasCurrentBonus + 20),
     );
 
-    return { score, reasons };
+    return { score, reasons, relevantYears };
 }
 
 function scoreLocation(contact: Contact, job: Job): number {

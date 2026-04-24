@@ -19,6 +19,8 @@ interface FilterBarProps {
     onExportCsv: () => void;
     onSettings: () => void;
     canExport: boolean;
+    compareCount: number;
+    onClearCompare: () => void;
 }
 
 export default function FilterBar({
@@ -38,15 +40,17 @@ export default function FilterBar({
     onExportCsv,
     onSettings,
     canExport,
+    compareCount,
+    onClearCompare,
 }: FilterBarProps) {
     return (
-        <div className="px-6 py-4 border-b border-neutral-200 bg-white shrink-0">
+        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shrink-0">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-lg font-bold text-neutral-800">
+                    <h1 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">
                         {selectedJob.title}
                     </h1>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-neutral-500">
+                    <div className="flex items-center gap-3 mt-1 text-sm text-neutral-500 dark:text-neutral-400">
                         {selectedJob.team && <span>{selectedJob.team}</span>}
                         {selectedJob.isRemote && (
                             <span className="text-emerald-600 font-medium">
@@ -60,7 +64,9 @@ export default function FilterBar({
                     <div className="text-2xl font-bold text-ember">
                         {topScore ?? "-"}
                     </div>
-                    <div className="text-xs text-neutral-400">Top Match</div>
+                    <div className="text-xs text-neutral-400 dark:text-neutral-500">
+                        Top Match
+                    </div>
                 </div>
             </div>
 
@@ -70,9 +76,9 @@ export default function FilterBar({
                     placeholder="Search candidates..."
                     value={search}
                     onChange={(e) => onSearchChange(e.target.value)}
-                    className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ember/30 focus:border-ember w-64"
+                    className="px-3 py-1.5 text-sm border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ember/30 focus:border-ember w-64"
                 />
-                <label className="flex items-center gap-1.5 text-sm text-neutral-600 cursor-pointer select-none">
+                <label className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400 cursor-pointer select-none">
                     <input
                         type="checkbox"
                         checked={filterOpenToWork}
@@ -81,7 +87,7 @@ export default function FilterBar({
                     />
                     Open to Work
                 </label>
-                <div className="flex items-center gap-2 text-sm text-neutral-600">
+                <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
                     <span>Min score:</span>
                     <input
                         type="range"
@@ -100,21 +106,29 @@ export default function FilterBar({
                     className={`px-2.5 py-1 text-sm rounded-lg border transition-colors ${
                         showShortlistOnly
                             ? "bg-amber-50 border-amber-200 text-amber-700"
-                            : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                            : "border-neutral-200 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                     }`}
                 >
                     Shortlisted ({shortlistSize})
                 </button>
+                {compareCount > 0 && (
+                    <button
+                        onClick={onClearCompare}
+                        className="px-2.5 py-1 text-sm rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                    >
+                        Comparing ({compareCount}/2)
+                    </button>
+                )}
                 <button
                     onClick={onExportCsv}
                     disabled={!canExport}
-                    className="px-2.5 py-1 text-sm rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-2.5 py-1 text-sm rounded-lg border border-neutral-200 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     Export CSV
                 </button>
                 <button
                     onClick={onSettings}
-                    className="px-2.5 py-1 text-sm rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors ml-auto"
+                    className="px-2.5 py-1 text-sm rounded-lg border border-neutral-200 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors ml-auto"
                 >
                     Settings
                 </button>

@@ -8,6 +8,7 @@ import FilterBar from "@/components/FilterBar";
 import CandidateTable from "@/components/CandidateTable";
 import CandidateDetail from "@/components/CandidateDetail";
 import SettingsModal from "@/components/SettingsModal";
+import ComparisonView from "@/components/ComparisonView";
 
 interface PageProps {
     jobs: Job[];
@@ -46,6 +47,10 @@ export default function ClientHome({ jobs }: PageProps) {
     const [showSettings, setShowSettings] = useState(false);
     const [weights, setWeights] = useState<ScoringWeights>(loadWeights);
     const [showShortlistOnly, setShowShortlistOnly] = useState(false);
+    const [compareCandidates, setCompareCandidates] = useState<
+        ScoredCandidate[]
+    >([]);
+    const [showComparison, setShowComparison] = useState(false);
 
     const panelDragging = useRef(false);
     const panelStartX = useRef(0);
@@ -71,6 +76,27 @@ export default function ClientHome({ jobs }: PageProps) {
             const next = new Set(prev);
             if (next.has(contactId)) next.delete(contactId);
             else next.add(contactId);
+            return next;
+        });
+    }, []);
+
+    const addToCompare = useCallback((candidate: ScoredCandidate) => {
+        setCompareCandidates((prev) => {
+            if (prev.find((c) => c.contact.id === candidate.contact.id))
+                return prev;
+            if (prev.length >= 2) return [...prev.slice(1), candidate];
+            const next = [...prev, candidate];
+            if (next.length === 2) {
+                setShowComparison(true);
+            }
+            return next;
+        });
+    }, []);
+
+    const removeFromCompare = useCallback((contactId: string) => {
+        setCompareCandidates((prev) => {
+            const next = prev.filter((c) => c.contact.id !== contactId);
+            if (next.length < 2) setShowComparison(false);
             return next;
         });
     }, []);
@@ -169,6 +195,8 @@ export default function ClientHome({ jobs }: PageProps) {
     const handleJobSelect = useCallback((job: Job) => {
         setSelectedJob(job);
         setSelectedCandidate(null);
+        setCompareCandidates([]);
+        setShowComparison(false);
     }, []);
 
     const filtered = useMemo(() => {
@@ -231,6 +259,9 @@ export default function ClientHome({ jobs }: PageProps) {
         };
     }, [ranked]);
 
+    const isComparing = (contactId: string) =>
+        compareCandidates.some((c) => c.contact.id === contactId);
+
     const onPanelMouseDown = useCallback(
         (e: React.MouseEvent) => {
             e.preventDefault();
@@ -291,6 +322,16 @@ export default function ClientHome({ jobs }: PageProps) {
         setWeights((prev) => ({ ...prev, [key]: value }));
     };
 
+    const normalizeWeights = () => {
+        const total = Object.values(weights).reduce((a, b) => a + b, 0);
+        if (total === 0) return;
+        const normalized: ScoringWeights = {} as ScoringWeights;
+        for (const key of Object.keys(weights) as (keyof ScoringWeights)[]) {
+            normalized[key] = weights[key] / total;
+        }
+        setWeights(normalized);
+    };
+
     const resetWeights = () => {
         setWeights({ ...DEFAULT_WEIGHTS });
     };
@@ -302,6 +343,9 @@ export default function ClientHome({ jobs }: PageProps) {
         }
     };
 
+    const showDetail =
+        selectedCandidate && compareCandidates.length < 2 && !showComparison;
+
     return (
         <main className="flex h-[calc(100vh-57px)]">
             <JobSidebar
@@ -312,7 +356,7 @@ export default function ClientHome({ jobs }: PageProps) {
 
             <div className="flex-1 flex flex-col overflow-hidden">
                 {!selectedJob ? (
-                    <div className="flex-1 flex items-center justify-center text-neutral-400">
+                    <div className="flex-1 flex items-center justify-center text-neutral-400 dark:text-neutral-500">
                         <div className="text-center">
                             <div className="text-lg font-medium">
                                 Select a role to view candidates
@@ -343,12 +387,22 @@ export default function ClientHome({ jobs }: PageProps) {
                             onExportCsv={exportShortlistCsv}
                             onSettings={() => setShowSettings(true)}
                             canExport={shortlist.size > 0}
+                            compareCount={compareCandidates.length}
+                            onClearCompare={() => {
+                                setCompareCandidates([]);
+                                setShowComparison(false);
+                            }}
                         />
                         <CandidateTable
                             candidates={filtered}
                             loading={loading}
                             selectedCandidate={selectedCandidate}
-                            onSelect={setSelectedCandidate}
+                            onSelect={(c) => {
+                                setSelectedCandidate(c);
+                                setShowComparison(false);
+                            }}
+                            onCompare={addToCompare}
+                            isComparing={isComparing}
                             colWidths={colWidths}
                             onColMouseDown={onColMouseDown}
                         />
@@ -356,7 +410,7 @@ export default function ClientHome({ jobs }: PageProps) {
                 )}
             </div>
 
-            {selectedCandidate && (
+            {showDetail && (
                 <CandidateDetail
                     candidate={selectedCandidate}
                     shortlisted={shortlist.has(selectedCandidate.contact.id)}
@@ -364,9 +418,24 @@ export default function ClientHome({ jobs }: PageProps) {
                         toggleShortlist(selectedCandidate.contact.id)
                     }
                     onClose={() => setSelectedCandidate(null)}
+                    onCompare={() => addToCompare(selectedCandidate)}
                     panelWidth={panelWidth}
                     onPanelMouseDown={onPanelMouseDown}
                     averageScores={averageScores}
+                />
+            )}
+
+            {showComparison && compareCandidates.length >= 2 && (
+                <ComparisonView
+                    candidates={compareCandidates}
+                    shortlist={shortlist}
+                    onToggleShortlist={toggleShortlist}
+                    onClose={() => {
+                        setShowComparison(false);
+                        setCompareCandidates([]);
+                        setSelectedCandidate(compareCandidates[0] || null);
+                    }}
+                    onRemove={removeFromCompare}
                 />
             )}
 
@@ -374,6 +443,7 @@ export default function ClientHome({ jobs }: PageProps) {
                 <SettingsModal
                     weights={weights}
                     onWeightChange={handleWeightChange}
+                    onNormalize={normalizeWeights}
                     onReset={resetWeights}
                     onCancel={() => setShowSettings(false)}
                     onApply={reRank}

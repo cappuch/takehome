@@ -8,6 +8,7 @@ interface CandidateDetailProps {
     shortlisted: boolean;
     onToggleShortlist: () => void;
     onClose: () => void;
+    onCompare: () => void;
     panelWidth: number;
     onPanelMouseDown: (e: React.MouseEvent) => void;
     averageScores: Record<string, number>;
@@ -18,6 +19,7 @@ export default function CandidateDetail({
     shortlisted,
     onToggleShortlist,
     onClose,
+    onCompare,
     panelWidth,
     onPanelMouseDown,
     averageScores,
@@ -30,35 +32,42 @@ export default function CandidateDetail({
               : "Low";
     const confidenceColor =
         candidate.confidence >= 80
-            ? "text-emerald-600"
+            ? "text-emerald-600 dark:text-emerald-400"
             : candidate.confidence >= 50
-              ? "text-amber-600"
-              : "text-red-500";
+              ? "text-amber-600 dark:text-amber-400"
+              : "text-red-500 dark:text-red-400";
 
     return (
         <>
             <div
-                className="w-1.5 cursor-col-resize hover:bg-ember/40 transition-colors bg-neutral-200 shrink-0 relative group"
+                className="w-1.5 cursor-col-resize hover:bg-ember/40 transition-colors bg-neutral-200 dark:bg-neutral-700 shrink-0 relative group"
                 onMouseDown={onPanelMouseDown}
             >
                 <div className="absolute inset-y-0 -left-1 -right-1" />
             </div>
             <aside
-                className="flex flex-col shrink-0 bg-white overflow-hidden"
+                className="flex flex-col shrink-0 bg-white dark:bg-neutral-900 overflow-hidden"
                 style={{ width: panelWidth }}
             >
-                <div className="px-5 py-3 border-b border-neutral-200 flex items-center justify-between bg-white">
+                <div className="px-5 py-3 border-b border-neutral-200 dark:border-neutral-700 flex items-center justify-between bg-white dark:bg-neutral-900">
                     <div>
-                        <div className="font-semibold text-neutral-800">
+                        <div className="font-semibold text-neutral-800 dark:text-neutral-100">
                             {candidate.contact.firstName}{" "}
                             {candidate.contact.lastName}
                         </div>
-                        <div className="text-xs text-neutral-500">
+                        <div className="text-xs text-neutral-500 dark:text-neutral-400">
                             {candidate.contact.currentTitle} @{" "}
                             {candidate.contact.currentCompany}
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={onCompare}
+                            className="text-xs px-2 py-1 border border-neutral-200 dark:border-neutral-600 rounded text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+                            title="Add to comparison"
+                        >
+                            Compare
+                        </button>
                         <button
                             onClick={onToggleShortlist}
                             className={`text-xl transition-colors ${
@@ -78,20 +87,20 @@ export default function CandidateDetail({
                             href={candidate.contact.linkedinUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs px-3 py-1.5 bg-neutral-900 text-white rounded-lg hover:bg-neutral-700 transition-colors font-medium"
+                            className="text-xs px-3 py-1.5 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-200 transition-colors font-medium"
                         >
                             Open LinkedIn ↗
                         </a>
                         <button
                             onClick={onClose}
-                            className="text-neutral-400 hover:text-neutral-700 text-xl leading-none"
+                            className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 text-xl leading-none"
                         >
                             &times;
                         </button>
                     </div>
                 </div>
 
-                <div className="px-5 py-3 border-b border-neutral-100">
+                <div className="px-5 py-3 border-b border-neutral-100 dark:border-neutral-800">
                     <div className="grid grid-cols-3 gap-3 text-center">
                         {[
                             {
@@ -120,7 +129,7 @@ export default function CandidateDetail({
                             },
                         ].map((s) => (
                             <div key={s.label}>
-                                <div className="text-lg font-bold text-neutral-700">
+                                <div className="text-lg font-bold text-neutral-700 dark:text-neutral-200">
                                     {s.value}
                                 </div>
                                 <div className="text-[10px] text-neutral-400 uppercase tracking-wider">
@@ -137,7 +146,7 @@ export default function CandidateDetail({
                             <div className="text-xs text-neutral-400 uppercase tracking-wider mb-0.5">
                                 Location
                             </div>
-                            <div className="text-neutral-700">
+                            <div className="text-neutral-700 dark:text-neutral-300">
                                 {candidate.contact.location}
                             </div>
                         </div>
@@ -148,7 +157,7 @@ export default function CandidateDetail({
                             <div
                                 className={
                                     candidate.contact.openToWork
-                                        ? "text-emerald-600 font-medium"
+                                        ? "text-emerald-600 dark:text-emerald-400 font-medium"
                                         : "text-neutral-400"
                                 }
                             >
@@ -159,7 +168,7 @@ export default function CandidateDetail({
                             <div className="text-xs text-neutral-400 uppercase tracking-wider mb-0.5">
                                 Connections
                             </div>
-                            <div className="text-neutral-700">
+                            <div className="text-neutral-700 dark:text-neutral-300">
                                 {candidate.contact.connectionsCount.toLocaleString()}
                             </div>
                         </div>
@@ -167,7 +176,7 @@ export default function CandidateDetail({
                             <div className="text-xs text-neutral-400 uppercase tracking-wider mb-0.5">
                                 Headline
                             </div>
-                            <div className="text-neutral-700 truncate">
+                            <div className="text-neutral-700 dark:text-neutral-300 truncate">
                                 {candidate.contact.headline}
                             </div>
                         </div>
@@ -178,7 +187,7 @@ export default function CandidateDetail({
                             Data Confidence
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-neutral-100 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
                                 <div
                                     className={`h-full rounded-full transition-all ${
                                         candidate.confidence >= 80
@@ -213,10 +222,10 @@ export default function CandidateDetail({
                                     >
                                         <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-ember shrink-0" />
                                         <div>
-                                            <span className="font-medium text-neutral-800">
+                                            <span className="font-medium text-neutral-800 dark:text-neutral-200">
                                                 {r.label}:
                                             </span>{" "}
-                                            <span className="text-neutral-600">
+                                            <span className="text-neutral-600 dark:text-neutral-400">
                                                 {r.detail}
                                             </span>
                                         </div>
@@ -231,7 +240,7 @@ export default function CandidateDetail({
                             <div className="text-xs text-neutral-400 uppercase tracking-wider mb-1">
                                 About
                             </div>
-                            <p className="text-sm text-neutral-600 leading-relaxed">
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
                                 {candidate.contact.about}
                             </p>
                         </div>
@@ -245,7 +254,7 @@ export default function CandidateDetail({
                             {candidate.contact.topSkills.map((skill, i) => (
                                 <span
                                     key={i}
-                                    className="px-2.5 py-1 bg-neutral-100 text-neutral-700 rounded-full text-xs font-medium"
+                                    className="px-2.5 py-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-full text-xs font-medium"
                                 >
                                     {skill}
                                 </span>
@@ -266,20 +275,20 @@ export default function CandidateDetail({
                                         className="flex items-start gap-2 text-sm"
                                     >
                                         <span
-                                            className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${exp.isCurrent ? "bg-ember" : "bg-neutral-300"}`}
+                                            className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${exp.isCurrent ? "bg-ember" : "bg-neutral-300 dark:bg-neutral-600"}`}
                                         />
                                         <div>
-                                            <span className="font-medium text-neutral-800">
+                                            <span className="font-medium text-neutral-800 dark:text-neutral-200">
                                                 {exp.title}
                                             </span>
                                             {exp.company && (
-                                                <span className="text-neutral-500">
+                                                <span className="text-neutral-500 dark:text-neutral-400">
                                                     {" "}
                                                     @ {exp.company}
                                                 </span>
                                             )}
                                             {exp.duration && (
-                                                <span className="text-neutral-400 ml-1">
+                                                <span className="text-neutral-400 dark:text-neutral-500 ml-1">
                                                     ({exp.duration})
                                                 </span>
                                             )}
@@ -299,7 +308,7 @@ export default function CandidateDetail({
                                     (edu, i) => (
                                         <p
                                             key={i}
-                                            className="text-sm text-neutral-600"
+                                            className="text-sm text-neutral-600 dark:text-neutral-400"
                                         >
                                             {edu.degree}
                                             {edu.field ? `, ${edu.field}` : ""}
@@ -323,7 +332,7 @@ export default function CandidateDetail({
                                     (cert, i) => (
                                         <span
                                             key={i}
-                                            className="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium"
+                                            className="px-2.5 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full text-xs font-medium"
                                         >
                                             {cert}
                                         </span>
@@ -333,7 +342,7 @@ export default function CandidateDetail({
                         </div>
                     )}
 
-                    <div className="pt-3 border-t border-neutral-100">
+                    <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800">
                         <div className="text-xs text-neutral-400 uppercase tracking-wider mb-3">
                             Score Breakdown vs Average
                         </div>
